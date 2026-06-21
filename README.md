@@ -190,6 +190,84 @@ uvicorn app.main:app --reload
 
 ---
 
+## Command Cheat Sheet
+
+Every command used while working on this project, in one place.
+
+### Environment setup
+```powershell
+# Copy the env template and fill in values
+Copy-Item .env.example .env
+
+# (Local, non-Docker) create and activate a virtualenv, install deps
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### Docker Compose
+```powershell
+docker compose up --build           # build + start all services (foreground)
+docker compose up -d --build        # build + start in background
+docker compose up -d postgres       # start only postgres
+docker compose down                 # stop services (keeps volumes)
+docker compose down -v              # stop services + delete volumes (wipes DB)
+docker compose logs -f api          # follow API logs
+docker compose ps                   # list running services
+docker compose run --rm api bash    # one-off shell in the api container
+docker compose exec postgres psql -U task_jet_user -d task_jet_db   # psql shell
+docker compose exec postgres psql -U task_jet_user -d task_jet_db -c "\dt"        # list tables
+docker compose exec postgres psql -U task_jet_user -d task_jet_db -c "\d users"   # describe the users table
+docker compose exec redis redis-cli # redis shell
+```
+
+### Alembic (run inside the api container)
+```powershell
+docker compose run --rm api alembic init alembic                                  # initialize migration env (one-time)
+docker compose run --rm api alembic revision --autogenerate -m "create tenants and users"  # new migration from models
+docker compose run --rm api alembic upgrade head                                  # apply all migrations
+docker compose run --rm api alembic downgrade -1                                  # roll back one migration
+docker compose run --rm api alembic current                                       # show current revision
+docker compose run --rm api alembic history                                       # show migration history
+```
+
+### Run the API locally (without Docker)
+```powershell
+uvicorn app.main:app --reload
+```
+
+### Git
+```powershell
+git checkout -b chore/dev-environment   # create a working branch
+```
+
+---
+
+## Troubleshooting
+
+**`password authentication failed for user "task_jet_user"`**
+Postgres only applies `POSTGRES_USER` / `POSTGRES_PASSWORD` when it first initializes an
+empty data directory. If you changed the password after the `postgres_data` volume was
+created, the old credentials persist. Recreate the volume:
+```powershell
+docker compose down -v
+docker compose up -d postgres
+```
+Avoid URL-special characters (`@ : / ? # %`) in `POSTGRES_PASSWORD`, or URL-encode them in
+`DATABASE_URL` (e.g. `@` → `%40`).
+
+**`alembic init` files don't appear on the host**
+The container's working directory (`/app`) must be bind-mounted to the host. `docker-compose.yml`
+mounts `.:/app` for the `api` service so generated files land in your project root.
+
+**`Import "sqlalchemy..." could not be resolved` in the editor**
+The dependencies aren't installed in the interpreter your editor is using. Create a local
+virtualenv and install `requirements.txt` (see *Environment setup*), then select
+`.venv` as the Python interpreter.
+
+---
+
 ## API Endpoints
 
 | Method | Path      | Description           |
