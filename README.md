@@ -56,27 +56,14 @@ task_jet/
 
 ## Environment Variables
 
-Create a `.env` file in the project root. Example:
+A template is provided in [`.env.example`](.env.example). Copy it to `.env` and fill in
+your own values:
 
-```env
-# Postgres
-POSTGRES_USER=task_jet_user
-POSTGRES_PASSWORD=change_me
-POSTGRES_DB=task_jet_db
-
-# App connections (use the compose service names as hosts)
-DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-REDIS_URL=redis://redis:6379/0
-
-# JWT
-JWT_SECRET_KEY=replace_with_a_long_random_secret
-JWT_ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=15
-REFRESH_TOKEN_EXPIRE_MINUTES=10080
-
-# Misc
-ENVIRONMENT=development
+```powershell
+Copy-Item .env.example .env
 ```
+
+The required variables are documented in `.env.example`. Never commit your real `.env`.
 
 > **Note:** `app/core/config.py` requires `refresh_token_expire_minutes`. Make sure your
 > `.env` key is `REFRESH_TOKEN_EXPIRE_MINUTES` (not `..._DAYS`), or the app will fail to start.
